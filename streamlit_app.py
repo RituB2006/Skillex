@@ -1,14 +1,16 @@
+
 import streamlit as st
 from fuzzywuzzy import fuzz
+import uuid  
 
 # ---------------- Title ----------------
 st.title("Welcome to Skillex!")
 
-# ---------------- Default users (in-memory, but stored in session) ----------------
 if "users" not in st.session_state:
     st.session_state.users = [
         {
             "id": "u1",
+            "password": "riri123",
             "name": "Riri",
             "skills_have": {"Python Basics": 30, "Public Speaking": 20},
             "skills_want": ["UI Design", "Data Visualization", "DSA in C"],
@@ -20,6 +22,7 @@ if "users" not in st.session_state:
         },
         {
             "id": "u2",
+            "password": "alice123",
             "name": "Alice",
             "skills_have": {"UI Design": 40, "Figma": 30},
             "skills_want": ["Python Basics"],
@@ -31,6 +34,7 @@ if "users" not in st.session_state:
         },
         {
             "id": "u3",
+            "password": "bob123",
             "name": "Bob",
             "skills_have": {"DSA in C": 50, "Java": 40},
             "skills_want": ["Public Speaking", "UI Design"],
@@ -39,8 +43,57 @@ if "users" not in st.session_state:
             "degree": "BSc in Computer Science",
             "contact": ["bob@example.com", "github.com/bob", "linkedin.com/in/bob"],
             "upvotes": 0
+        },
+        {
+            "id": "u4",
+            "password": "ethan123",
+            "name": "Ethan",
+            "skills_have": {"UI Design": 35, "Photoshop": 25},
+            "skills_want": ["Python Basics", "Public Speaking"],
+            "credits": 50,
+            "about": "Graphic designer exploring coding skills.",
+            "degree": "BA in Design",
+            "contact": ["ethan@example.com", "github.com/ethan", "linkedin.com/in/ethan"],
+            "upvotes": 0
+        },
+        {
+            "id": "u5",
+            "password": "lily123",
+            "name": "Lily",
+            "skills_have": {"Dance": 50, "Yoga": 40},
+            "skills_want": ["Music Basics", "Python Basics"],
+            "credits": 60,
+            "about": "Fitness and performing arts enthusiast.",
+            "degree": "Diploma in Dance",
+            "contact": ["lily@example.com", "github.com/lily", "linkedin.com/in/lily"],
+            "upvotes": 0
+        },
+        {
+            "id": "u6",
+            "password": "noah123",
+            "name": "Noah",
+            "skills_have": {"public speaking": 45, "Guitar": 30},
+            "skills_want": ["Dance", "Python Basics"],
+            "credits": 40,
+            "about": "Aspiring musician and coding beginner. Can help you build cofidence in speaking English.",
+            "degree": "Bachelor of Arts in Music",
+            "contact": ["noah@example.com", "github.com/noah", "linkedin.com/in/noah"],
+            "upvotes": 0
+        },
+        {
+            "id": "u7",
+            "password": "emma123",
+            "name": "Emma",
+            "skills_have": {"Cooking": 50, "pulic speaking": 40},
+            "skills_want": ["Yoga", "Python Basics"],
+            "credits": 55,
+            "about": "Home chef passionate about culinary arts. Good speaker and debater.",
+            "degree": "Culinary Diploma",
+            "contact": ["emma@example.com", "github.com/emma", "linkedin.com/in/emma"],
+            "upvotes": 0
         }
     ]
+
 
 users = st.session_state.users  # always work from session state
 
@@ -53,7 +106,6 @@ if "current_user" not in st.session_state:
     st.session_state.current_user = None
 if "step" not in st.session_state:
     st.session_state.step = "login"
-
 
 # ---------------- Helper: handle upvotes ----------------
 def handle_upvote(voter_id, target_user):
@@ -70,23 +122,23 @@ def handle_upvote(voter_id, target_user):
     else:
         target_user["upvotes"] += 1
         st.session_state.votes[voter_id].add(target_user["id"])
-        st.rerun()
-
+        st.session_state.step = st.session_state.step  # triggers rerun
 
 # ---------------- Step 1: Login/Register ----------------
 if st.session_state.step == "login":
     st.subheader("Login or Register")
     with st.form("login_form"):
         login_id = st.text_input("Enter your user ID").strip()
+        login_password = st.text_input("Enter your password", type="password").strip()
         login_button = st.form_submit_button("Login")
         if login_button:
-            user = next((u for u in users if u["id"] == login_id), None)
+            user = next((u for u in users if u["id"] == login_id and u.get("password") == login_password), None)
             if user:
                 st.session_state.current_user = user
                 st.session_state.step = "search"
-                st.rerun()
+                st.session_state.step = st.session_state.step  # triggers rerun
             else:
-                st.error("User ID not found. Please register.")
+                st.error("Invalid User ID or password. Please register if new.")
 
     st.write("--- OR ---")
     with st.form("register_form"):
@@ -96,8 +148,9 @@ if st.session_state.step == "login":
         new_credits_for_skills = st.text_area("Credits for each skill (comma separated, same order)")
         new_skills_want = st.text_area("Skills you want to learn (comma separated)")
         new_about = st.text_area("Describe yourself")
-        new_degree = st.text_area("Degrees or accomplishments relevant to your skills")
+        new_degree = st.text_area("Degrees relevant to your skills")
         new_contact = st.text_area("Email, GitHub, LinkedIn (comma separated)")
+        new_password = st.text_input("Set your password", type="password")
         register_button = st.form_submit_button("Register")
         if register_button:
             if any(u["id"] == new_id.strip() for u in users):
@@ -118,12 +171,13 @@ if st.session_state.step == "login":
                         "about": new_about.strip(),
                         "degree": new_degree.strip(),
                         "contact": [c.strip() for c in new_contact.split(",") if c.strip()],
-                        "upvotes": 0
+                        "upvotes": 0,
+                        "password": new_password.strip()
                     }
                     users.append(new_user)
                     st.session_state.current_user = new_user
                     st.session_state.step = "search"
-                    st.rerun()
+                    st.session_state.step = st.session_state.step  # triggers rerun
 
 # ---------------- Step 2: Search & Exchange ----------------
 elif st.session_state.step == "search":
@@ -173,8 +227,8 @@ elif st.session_state.step == "search":
         if learners:
             st.write(f"People who want to learn {skill_to_teach_input}:")
             for l in learners:
-                st.write(f"- {l['name']} (Credits: {l['credits']}) | Upvotes: {l['upvotes']}")
-                if st.button(f"👍 Upvote {l['name']}", key=f"upvote_l_{l['id']}"):
+                st.write(f"- {l['name']} | Upvotes: {l['upvotes']}")
+                if st.button(f" Upvote {l['name']}", key=f"upvote_l_{l['id']}"):
                     handle_upvote(current_user["id"], l)
                 if st.button(f"Show {l['name']}'s Profile", key=f"profile_l_{l['id']}"):
                     st.write(f"**About:** {l.get('about','Not provided')}")
@@ -187,7 +241,14 @@ elif st.session_state.step == "search":
 
     # --- Double coincidence ---
     st.subheader("Search for double coincidence")
+
+    if "show_double" not in st.session_state:
+        st.session_state.show_double = False
+
     if st.button("Double coincidence"):
+        st.session_state.show_double = True
+
+    if st.session_state.show_double:
         found = False
         for i in users:
             if i["id"] == current_user["id"]:
@@ -202,7 +263,7 @@ elif st.session_state.step == "search":
                         f"and wants to learn **{skill_to_teach_input}** from you. | Upvotes: {i['upvotes']}"
                     )
                     found = True
-                    if st.button(f"Upvote {i['name']}", key=f"upvote_d_{i['id']}"):
+                    if st.button(f" Upvote {i['name']}", key=f"upvote_d_{i['id']}"):
                         handle_upvote(current_user["id"], i)
                     if st.button(f"Show {i['name']}'s Profile", key=f"profile_d_{i['id']}"):
                         st.write(f"**About:** {i.get('about','Not provided')}")
@@ -212,6 +273,7 @@ elif st.session_state.step == "search":
                             st.write(f"**Email:** {contact_info[0]}")
                             st.write(f"**GitHub:** {contact_info[1]}")
                             st.write(f"**LinkedIn:** {contact_info[2]}")
+
         if not found:
             st.write("No double coincidences yet. 🧐")
 
