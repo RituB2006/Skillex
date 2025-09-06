@@ -34,7 +34,7 @@ With Skillex, you can:
 
 ## Live Demo
 
- [Click here to try Skillex](your-live-demo-link)
+ [Click here to try Skillex](https://skillex-bl76rysjfm9dbqrky86ofl.streamlit.app/)
 
 ---
 
